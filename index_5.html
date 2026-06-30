@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard Vi phạm Lâm nghiệp — Sơn La (Live)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:        #faf3f3;
+  --surface:   #ffffff;
+  --ink:       #2a1416;
+  --ink-2:     #6b4548;
+  --ink-3:     #9c7d7f;
+  --maroon:    #8b1e24;
+  --rose:      #c1272d;
+  --gold:      #c89200;
+  --green:     #4a7a36;
+  --line:      #ecd8d8;
+  --shadow:    0 4px 18px rgba(139,30,36,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{ background:var(--bg); color:var(--ink); font-family:'Be Vietnam Pro',sans-serif; font-size:14px; min-height:100vh; }
+
+.header{
+  background: linear-gradient(135deg, #f3e0e0 0%, #e8c7c8 55%, #d9a3a6 100%);
+  border-bottom: 2px solid var(--maroon);
+  padding: 18px 32px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+  position: sticky; top:0; z-index:100;
+}
+.header-left{ display:flex; align-items:center; gap:14px; }
+.logo-icon{
+  width:42px;height:42px; border-radius:10px;
+  background: linear-gradient(135deg, var(--maroon), var(--rose));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff; font-weight:800; font-size:14px;
+  box-shadow: var(--shadow);
+}
+.header-title h1{ font-size:18px; font-weight:800; color:var(--ink); letter-spacing:-0.01em; }
+.header-title p{ font-size:11.5px; color:var(--ink-2); margin-top:2px; }
+.header-right{ display:flex; gap:10px; }
+.chip{
+  font-family:'Roboto Mono',monospace; font-size:11px; font-weight:600;
+  padding:6px 14px; border-radius:99px; background:rgba(139,30,36,0.10); color:var(--maroon);
+}
+
+.scenario-bar{
+  max-width:1500px; margin:18px auto 0; padding:0 32px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.scenario-bar .tag{
+  font-family:'Roboto Mono',monospace; font-size:11px; font-weight:700;
+  color:var(--maroon); background:rgba(139,30,36,0.08);
+  padding:5px 11px; border-radius:6px;
+}
+.scenario-bar .ttl{ font-size:14px; font-weight:600; color:var(--ink); }
+
+.api-bar{
+  background: linear-gradient(90deg, rgba(139,30,36,0.08), rgba(184,67,74,0.04));
+  border: 1px solid rgba(139,30,36,0.25);
+  border-radius: 10px; padding: 12px 18px; margin: 14px auto 0;
+  max-width: 1500px; display:flex; justify-content:space-between; align-items:center;
+  gap:16px; flex-wrap:wrap;
+}
+.api-status{ font-size:13px; color:var(--ink); flex:1; min-width:300px; }
+.api-status strong{ color:var(--maroon); }
+.api-status code{ background:rgba(139,30,36,0.08); padding:1px 6px; border-radius:3px; font-family:'Roboto Mono',monospace; font-size:11px; color:var(--maroon); }
+.api-btn{
+  background: linear-gradient(135deg, var(--maroon), var(--rose));
+  color:#fff; border:none; padding:10px 22px; border-radius:6px;
+  font-family:'Be Vietnam Pro',sans-serif; font-weight:600; font-size:13px;
+  cursor:pointer; transition: transform .15s, opacity .15s; white-space:nowrap;
+}
+.api-btn:hover{ transform: translateY(-1px); opacity:.92; }
+.api-btn:disabled{ opacity:.5; cursor:wait; transform:none; }
+
+.main{ max-width:1500px; margin:0 auto; padding:18px 32px 40px; }
+
+.kpi-row{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px; }
+.kpi-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--shadow);
+}
+.kpi-card .lbl{ font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-bottom:6px; }
+.kpi-card .val{ font-size:28px; font-weight:800; color:var(--ink); letter-spacing:-0.02em; }
+.kpi-card .sub{ font-size:11px; color:var(--ink-3); margin-top:4px; }
+.kpi-card .bar{ height:4px; border-radius:2px; background:var(--line); margin-top:10px; overflow:hidden; }
+.kpi-card .bar i{ display:block; height:100%; border-radius:2px; }
+
+.warn-banner{
+  background: rgba(193,39,45,0.07); border:1px solid rgba(193,39,45,0.30);
+  border-left:4px solid var(--rose); border-radius:8px; padding:14px 18px; margin-bottom:18px;
+  display:flex; gap:12px; align-items:flex-start;
+}
+.warn-banner .ico{ font-size:18px; }
+.warn-banner .txt strong{ display:block; font-size:13.5px; margin-bottom:3px; color:#6f1318; }
+.warn-banner .txt span{ font-size:12.5px; color:var(--ink-2); }
+.warn-items{ display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+.warn-item{
+  border:1px solid rgba(193,39,45,0.35); border-radius:4px; padding:3px 9px;
+  font-size:11.5px; color:#8a1a20; font-weight:500; background:#fff;
+}
+
+.panels{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:18px; }
+.panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:18px 20px; box-shadow:var(--shadow);
+}
+.panel h3{ font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:2px; display:flex; align-items:center; gap:8px; }
+.panel .desc{ font-size:11.5px; color:var(--ink-3); margin-bottom:14px; }
+.chart-wrap{ position:relative; height:260px; }
+.chart-wrap.tall{ height:300px; }
+
+.section-title{
+  font-size:13px; font-weight:700; color:var(--maroon);
+  text-transform:uppercase; letter-spacing:0.08em; margin:22px 0 12px;
+  display:flex; align-items:center; gap:10px;
+}
+.section-title::after{ content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--maroon),transparent); }
+
+.rec-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px; }
+.rec-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+  box-shadow:var(--shadow);
+}
+.rec-card h4{ font-size:13px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:7px; }
+.rec-card ul{ list-style:none; }
+.rec-card li{ font-size:12px; color:var(--ink-2); padding:5px 0 5px 16px; position:relative; line-height:1.45; }
+.rec-card li::before{ content:'•'; position:absolute; left:2px; color:var(--maroon); font-weight:700; }
+
+.table-panel{
+  background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:18px 20px; box-shadow:var(--shadow); margin-bottom:18px;
+}
+.table-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px; }
+.table-head h3{ font-size:13.5px; font-weight:700; }
+.search-box{
+  border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:12.5px;
+  font-family:inherit; width:240px;
+}
+table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+thead th{
+  text-align:left; padding:8px 10px; font-weight:700; color:var(--ink-2);
+  border-bottom:2px solid var(--line); cursor:pointer; user-select:none; white-space:nowrap;
+}
+tbody td{ padding:7px 10px; border-bottom:1px solid var(--line); }
+tbody tr:hover{ background: rgba(139,30,36,0.03); }
+.td-num{ text-align:right; font-family:'Roboto Mono',monospace; }
+.badge{ font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:99px; }
+.badge.cao{ background:rgba(193,39,45,0.12); color:#8a1a20; }
+.badge.trungbinh{ background:rgba(200,146,0,0.14); color:#8a6300; }
+.badge.thap{ background:rgba(74,122,54,0.12); color:#33591f; }
+
+footer{ text-align:center; padding:24px; font-size:11.5px; color:var(--ink-3); border-top:1px solid var(--line); margin-top:10px; }
+
+@media (max-width: 1100px){
+  .kpi-row{ grid-template-columns:repeat(2,1fr); }
+  .panels{ grid-template-columns:1fr; }
+  .rec-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-icon">⚠</div>
+    <div class="header-title">
+      <h1>DASHBOARD VI PHẠM LÂM NGHIỆP — TỈNH SƠN LA</h1>
+      <p>Sở Nông nghiệp &amp; Môi trường Sơn La | Kịch bản thi IOC số 02 | Dữ liệu 2021 – Quý II/2026</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="chip">CHI CỤC KIỂM LÂM</span>
+    <span class="chip">● Dữ liệu thực</span>
+  </div>
+</div>
+
+<div class="scenario-bar">
+  <span class="tag">KỊCH BẢN</span>
+  <span class="ttl">KB-02: Giám sát vi phạm lâm nghiệp &amp; cảnh báo địa bàn nóng</span>
+</div>
+
+<div class="api-bar">
+  <div id="apiStatus" class="api-status">⏳ Đang khởi tạo...</div>
+  <button id="btnRefresh" class="api-btn" onclick="loadData()">🔄 Cập nhật dữ liệu</button>
+</div>
+
+<div class="main">
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="lbl">Tổng số vụ vi phạm</div>
+      <div class="val kpi-value">—</div>
+      <div class="sub">2021 – Quý II/2026</div>
+      <div class="bar"><i style="width:100%;background:linear-gradient(90deg,#8b1e24,#c1272d)"></i></div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Đã xử lý hành chính</div>
+      <div class="val kpi-value">—</div>
+      <div class="sub">Tỷ lệ xử lý / tổng vụ</div>
+      <div class="bar"><i style="width:90%;background:linear-gradient(90deg,#a36420,#cf8527)"></i></div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Phá rừng trái pháp luật</div>
+      <div class="val kpi-value">—</div>
+      <div class="sub">Loại vi phạm chủ đạo</div>
+      <div class="bar"><i style="width:64%;background:linear-gradient(90deg,#8b1e24,#c1272d)"></i></div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Đã xử lý hình sự</div>
+      <div class="val kpi-value">—</div>
+      <div class="sub">Vụ nghiêm trọng</div>
+      <div class="bar"><i style="width:30%;background:linear-gradient(90deg,#6b1418,#8b1e24)"></i></div>
+    </div>
+    <div class="kpi-card">
+      <div class="lbl">Đơn vị mức cao (≥150 vụ)</div>
+      <div class="val kpi-value">—</div>
+      <div class="sub">/ 20 đơn vị Kiểm lâm</div>
+      <div class="bar"><i style="width:35%;background:linear-gradient(90deg,#8b1e24,#c1272d)"></i></div>
+    </div>
+  </div>
+
+  <div class="warn-banner">
+    <span class="ico">⚠️</span>
+    <div class="txt">
+      <strong id="warnTitle">Cảnh báo địa bàn nóng</strong>
+      <span id="warnDesc">Đang tải...</span>
+      <div class="warn-items" id="warnItems"></div>
+    </div>
+  </div>
+
+  <div class="section-title">Tổng quan vi phạm theo thời gian &amp; loại hình</div>
+  <div class="panels">
+    <div class="panel">
+      <h3>📈 Diễn biến vi phạm theo năm</h3>
+      <div class="desc">Tổng số vụ, xử lý hành chính, xử lý hình sự</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>🥧 Cơ cấu theo loại vi phạm</h3>
+      <div class="desc">Phân bổ tổng số vụ theo 7 nhóm hành vi</div>
+      <div class="chart-wrap"><canvas id="typeChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h3>🏆 Top 8 đơn vị nhiều vi phạm nhất</h3>
+      <div class="desc">Xếp hạng 20 đơn vị Kiểm lâm theo tổng số vụ</div>
+      <div class="chart-wrap tall"><canvas id="topUnitChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <h3>💰 Nộp ngân sách theo đơn vị (Top 8)</h3>
+      <div class="desc">Đơn vị: triệu đồng</div>
+      <div class="chart-wrap tall"><canvas id="budgetChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="section-title">Đề xuất của AI — hỗ trợ ra quyết định điều hành</div>
+  <div class="rec-grid">
+    <div class="rec-card">
+      <h4>🔴 Nhóm mức cao (≥150 vụ)</h4>
+      <ul id="recCao"><li>Đang tải...</li></ul>
+    </div>
+    <div class="rec-card">
+      <h4>🟡 Nhóm trung bình (50–149 vụ)</h4>
+      <ul id="recTb"><li>Đang tải...</li></ul>
+    </div>
+    <div class="rec-card">
+      <h4>🟢 Định hướng toàn tỉnh</h4>
+      <ul id="recTinh"><li>Đang tải...</li></ul>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <div class="table-head">
+      <h3>📋 Bảng chi tiết — 20 đơn vị báo cáo</h3>
+      <input type="text" id="searchInput" class="search-box" placeholder="🔍 Tìm đơn vị...">
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th data-k="stt">TT</th>
+          <th data-k="don_vi">Đơn vị báo cáo</th>
+          <th data-k="tong_vp">Tổng VP</th>
+          <th data-k="da_xl_hc">Hành chính</th>
+          <th data-k="pha_rung">Phá rừng</th>
+          <th data-k="van_chuyen">Vận chuyển</th>
+          <th data-k="hinh_su">Hình sự</th>
+          <th data-k="nop_ngan_sach">Nộp NS (triệu đ)</th>
+          <th data-k="nhom">Nhóm</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  Dữ liệu: Tổng hợp báo cáo vi phạm — Chi cục Kiểm lâm Sơn La (2021 – Q2/2026) · Đơn vị quản lý: Chi cục Kiểm lâm — Sở NN&amp;MT Sơn La · Cuộc thi Ứng dụng AI &amp; Khai thác Kho dữ liệu chung Sơn La 2026 · Kịch bản KB-02
+</footer>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwbWu5eGoBdGjFtE9Vzb1v4o-oZcjNuGgjpK7eKoR9Wao2gsA7T-GrpiWopnMCTzx2A/exec';
+
+let DATA = null;
+const _charts = [];
+function _reg(ch){ _charts.push(ch); return ch; }
+function _resetCharts(){ while(_charts.length){ try{_charts.pop().destroy();}catch(e){} } }
+
+const C = {
+  maroon:'#8b1e24', rose:'#c1272d', gold:'#c89200', green:'#4a7a36',
+  amber:'#cf8527', textDim:'#9c7d7f', textMain:'#2a1416', grid:'rgba(139,30,36,0.10)'
+};
+
+function fmt(n){ return Math.round(n).toLocaleString('vi-VN'); }
+
+async function loadData(){
+  const statusEl = document.getElementById('apiStatus');
+  const btn = document.getElementById('btnRefresh');
+  if(btn) btn.disabled = true;
+  if(statusEl) statusEl.textContent = '⏳ Đang tải dữ liệu từ Google Sheets...';
+
+  if(!API_URL || API_URL.indexOf('PASTE_YOUR') >= 0){
+    if(statusEl) statusEl.innerHTML = '⚠️ <strong>CHƯA CẤU HÌNH API_URL</strong> — Dán URL Apps Script vào biến <code>API_URL</code>.';
+    if(btn) btn.disabled = false;
+    return;
+  }
+  try{
+    const url = API_URL + (API_URL.indexOf('?')>=0?'&':'?') + 't=' + Date.now();
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const api = await res.json();
+    if(api.error) throw new Error(api.message || 'API error');
+    DATA = api;
+    renderAll();
+    if(statusEl) statusEl.innerHTML = `✅ Dữ liệu mới nhất · Cập nhật lúc <strong>${api.meta.generated_at}</strong> · ${api.meta.total_units} đơn vị báo cáo`;
+  }catch(err){
+    if(statusEl) statusEl.innerHTML = '❌ Lỗi tải dữ liệu: '+err.message+' — Kiểm tra URL Apps Script và quyền truy cập.';
+    console.error(err);
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+}
+
+function renderAll(){
+  _resetCharts();
+  updateKpis();
+  renderWarning();
+  renderTrendChart();
+  renderTypeChart();
+  renderTopUnitChart();
+  renderBudgetChart();
+  renderRecommendations();
+  renderTable([...DATA.units].sort((a,b)=>b.tong_vp - a.tong_vp));
+}
+
+function updateKpis(){
+  const t = DATA.totals;
+  const vals = document.querySelectorAll('.kpi-value');
+  if(vals[0]) vals[0].textContent = fmt(t.tong_vp);
+  if(vals[1]) vals[1].textContent = fmt(t.da_xl_hc);
+  if(vals[2]) vals[2].textContent = fmt(t.pha_rung);
+  if(vals[3]) vals[3].textContent = fmt(t.hinh_su);
+  if(vals[4]) vals[4].textContent = DATA.groups.cao;
+}
+
+function renderWarning(){
+  const top = [...DATA.units].sort((a,b)=>b.tong_vp-a.tong_vp).slice(0,6);
+  document.getElementById('warnDesc').textContent =
+    `${DATA.groups.cao} đơn vị Kiểm lâm có mức vi phạm cao (≥150 vụ), tập trung chủ yếu ở hành vi phá rừng trái pháp luật. Kiến nghị tăng cường tuần tra, xử lý nghiêm các điểm nóng.`;
+  document.getElementById('warnItems').innerHTML = top.map(u =>
+    `<span class="warn-item"><strong>${u.don_vi}</strong> · ${u.tong_vp} vụ</span>`
+  ).join('');
+}
+
+function renderTrendChart(){
+  const labels = DATA.trend.map(t => t.nam);
+  _reg(new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Tổng VP', data: DATA.trend.map(t=>t.tong_vp), backgroundColor: C.maroon, borderRadius:4, order:2 },
+        { label:'Hành chính', data: DATA.trend.map(t=>t.hanh_chinh), backgroundColor: C.amber, borderRadius:4, order:2 },
+        { label:'Hình sự', data: DATA.trend.map(t=>t.hinh_su), type:'line', borderColor: C.rose, backgroundColor: C.rose, tension:.3, yAxisID:'y1', order:1 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ color:C.textMain, font:{size:11}, boxWidth:10 } } },
+      scales:{
+        x:{ ticks:{color:C.textDim,font:{size:10}}, grid:{display:false} },
+        y:{ ticks:{color:C.textDim,font:{size:10}}, grid:{color:C.grid} },
+        y1:{ position:'right', ticks:{color:C.textDim,font:{size:10}}, grid:{display:false} }
+      }
+    }
+  }));
+}
+
+function renderTypeChart(){
+  const t = DATA.totals;
+  const data = [t.pha_rung, t.van_chuyen, t.tang_tru, t.khai_thac_vp, t.vp_khac1, t.vp_bvr, t.vp_khac2];
+  const labels = ['Phá rừng trái phép','Vận chuyển lâm sản','Tàng trữ/mua bán','Khai thác trái phép','VP quản lý khác','VP bảo vệ rừng','Hành vi khác'];
+  const colors = [C.maroon, C.rose, '#a8421b', C.amber, '#7d4a1c', C.gold, '#9c7d7f'];
+  _reg(new Chart(document.getElementById('typeChart'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor: colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'58%',
+      plugins:{ legend:{ position:'right', labels:{ color:C.textMain, font:{size:10.5}, boxWidth:10, padding:8 } } }
+    }
+  }));
+}
+
+function renderTopUnitChart(){
+  const top = [...DATA.units].sort((a,b)=>b.tong_vp-a.tong_vp).slice(0,8);
+  _reg(new Chart(document.getElementById('topUnitChart'), {
+    type:'bar',
+    data:{
+      labels: top.map(u=>u.don_vi.replace('Hạt Kiểm lâm khu vực','HKL KV').replace('Hạt Kiểm lâm Khu vực','HKL KV')),
+      datasets:[{ label:'Tổng vụ VP', data: top.map(u=>u.tong_vp), backgroundColor: top.map(u=>u.nhom==='cao'?C.maroon:(u.nhom==='trungbinh'?C.amber:C.green)), borderRadius:5 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ ticks:{color:C.textDim,font:{size:10}}, grid:{color:C.grid} }, y:{ ticks:{color:C.textMain,font:{size:10.5}}, grid:{display:false} } }
+    }
+  }));
+}
+
+function renderBudgetChart(){
+  const top = [...DATA.units].sort((a,b)=>b.nop_ngan_sach-a.nop_ngan_sach).slice(0,8);
+  _reg(new Chart(document.getElementById('budgetChart'), {
+    type:'bar',
+    data:{
+      labels: top.map(u=>u.don_vi.replace('Hạt Kiểm lâm khu vực','HKL KV').replace('Hạt Kiểm lâm Khu vực','HKL KV')),
+      datasets:[{ label:'Nộp ngân sách (triệu đ)', data: top.map(u=>Math.round(u.nop_ngan_sach/1000)), backgroundColor: C.gold, borderRadius:5 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ ticks:{color:C.textDim,font:{size:10}}, grid:{color:C.grid} }, y:{ ticks:{color:C.textMain,font:{size:10.5}}, grid:{display:false} } }
+    }
+  }));
+}
+
+function renderRecommendations(){
+  const cao = DATA.units.filter(u=>u.nhom==='cao').sort((a,b)=>b.tong_vp-a.tong_vp);
+  const tb = DATA.units.filter(u=>u.nhom==='trungbinh').sort((a,b)=>b.tong_vp-a.tong_vp);
+
+  document.getElementById('recCao').innerHTML = cao.length ? `
+    <li>${cao.length} đơn vị cần tăng cường lực lượng: ${cao.slice(0,4).map(u=>u.don_vi.replace('Hạt Kiểm lâm khu vực','HKL KV')).join(', ')}${cao.length>4?'...':''}</li>
+    <li>Ưu tiên kiểm tra đột xuất tại các điểm phá rừng trái pháp luật — chiếm tỷ trọng lớn nhất toàn tỉnh</li>
+    <li>Phối hợp công an địa bàn xử lý nghiêm các vụ có dấu hiệu hình sự</li>
+  ` : '<li>Không có đơn vị thuộc nhóm cao</li>';
+
+  document.getElementById('recTb').innerHTML = tb.length ? `
+    <li>${tb.length} đơn vị cần duy trì tuần tra định kỳ, theo dõi sát diễn biến</li>
+    <li>Rà soát các vụ vận chuyển lâm sản trái phép — nguy cơ chuyển dịch từ nhóm cao</li>
+    <li>Tăng cường tuyên truyền pháp luật tại cộng đồng dân cư ven rừng</li>
+  ` : '<li>Không có đơn vị thuộc nhóm trung bình</li>';
+
+  document.getElementById('recTinh').innerHTML = `
+    <li>Xu hướng giảm dần qua các năm (552 vụ năm 2021 → giảm mạnh các năm gần đây) — cần duy trì đà giảm</li>
+    <li>Phá rừng trái pháp luật vẫn là hành vi chủ đạo — tập trung nguồn lực xử lý gốc rễ</li>
+    <li>Khuyến nghị xác minh lại số liệu năm 2025 và Quý I/2026 (có dấu hiệu trùng lặp số liệu)</li>
+  `;
+}
+
+function renderTable(rows){
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = rows.map(u => `
+    <tr>
+      <td>${u.stt}</td>
+      <td>${u.don_vi}</td>
+      <td class="td-num" style="${u.tong_vp>=150?'color:#8a1a20;font-weight:700':''}">${fmt(u.tong_vp)}</td>
+      <td class="td-num">${fmt(u.da_xl_hc)}</td>
+      <td class="td-num">${fmt(u.pha_rung)}</td>
+      <td class="td-num">${fmt(u.van_chuyen)}</td>
+      <td class="td-num">${fmt(u.hinh_su)}</td>
+      <td class="td-num">${fmt(u.nop_ngan_sach/1000)}</td>
+      <td><span class="badge ${u.nhom}">${u.nhom==='cao'?'Cao':u.nhom==='trungbinh'?'TB':'Thấp'}</span></td>
+    </tr>
+  `).join('');
+}
+
+let sortCol = 'tong_vp', sortDir = -1;
+document.querySelectorAll('thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    sortDir = (sortCol === k) ? -sortDir : -1;
+    sortCol = k;
+    const sorted = [...DATA.units].sort((a,b) => {
+      const av = a[k], bv = b[k];
+      return typeof av === 'string' ? av.localeCompare(bv)*sortDir : (av-bv)*sortDir;
+    });
+    renderTable(sorted);
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  const filtered = DATA.units.filter(u => u.don_vi.toLowerCase().includes(q));
+  renderTable([...filtered].sort((a,b)=>b.tong_vp-a.tong_vp));
+});
+
+document.addEventListener('DOMContentLoaded', () => { loadData(); });
+</script>
+</body>
+</html>
